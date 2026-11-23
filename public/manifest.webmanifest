@@ -1,10 +1,18 @@
 {
   "name": "무석연합민턴",
-  "short_name": "무석민턴",
+  "short_name": "무석연합민턴",
+  "description": "무석연합교회 배드민턴 모임 코트비 엔빵",
+  "lang": "ko",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f4fbf9",
   "theme_color": "#2bb5a0",
-  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
 }

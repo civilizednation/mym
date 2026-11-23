@@ -1,10 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#2bb5a0"/>
-  <g transform="rotate(-25 256 256)">
-    <path d="M196 120 L316 120 L292 300 L220 300 Z" fill="#ffffff"/>
-    <path d="M226 120 L238 300 M256 120 L256 300 M286 120 L274 300" stroke="#cdeee8" stroke-width="8"/>
-    <path d="M206 200 L306 200" stroke="#cdeee8" stroke-width="8"/>
-    <rect x="212" y="292" width="88" height="22" rx="8" fill="#ffd54a"/>
-    <circle cx="256" cy="348" r="48" fill="#ffd54a"/>
-  </g>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3cc7b1"/>
+      <stop offset="1" stop-color="#1f9886"/>
+    </linearGradient>
+    <linearGradient id="cork" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd95a"/>
+      <stop offset="1" stop-color="#f6b622"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <g transform="translate(256 262) scale(0.92) translate(-299 -214)"><g transform="rotate(35 256 256) translate(0 -8)">
+    <!-- 깃털 스커트 -->
+    <path d="M160 96 Q256 76 352 96 L292 300 L220 300 Z" fill="#ffffff"/>
+    <!-- 깃대 -->
+    <g stroke="#bfe9e1" stroke-width="7" stroke-linecap="round" fill="none">
+      <path d="M200 92 L234 298"/>
+      <path d="M256 86 L256 298"/>
+      <path d="M312 92 L278 298"/>
+    </g>
+    <!-- 실 띠 -->
+    <path d="M186 180 Q256 168 326 180" stroke="#bfe9e1" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M204 240 Q256 232 308 240" stroke="#bfe9e1" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <!-- 코르크 -->
+    <rect x="212" y="292" width="88" height="24" rx="10" fill="#e9a816"/>
+    <path d="M214 310 L298 310 Q298 392 256 392 Q214 392 214 310 Z" fill="url(#cork)"/>
+  </g></g>
 </svg>
