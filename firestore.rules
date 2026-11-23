@@ -1,0 +1,13 @@
+rules_version = '2';
+// A 방식: 링크를 아는 누구나 보기/정산/수정 가능 (무석연합민턴 데이터에만 한정)
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /mym_meta/{docId} {
+      allow read, write: if true;
+    }
+    match /mym_records/{date} {
+      allow read: if true;
+      allow write: if date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+  }
+}

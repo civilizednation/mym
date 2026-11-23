@@ -1,10 +1,12 @@
 import { useMemo, useRef, useState } from 'react';
 import Header from './Header.jsx';
 import { navigate, goBack } from '../router.js';
-import { dateLabel, lastSunday } from '../date.js';
+import { dateLabel, lastSunday, shortLabel } from '../date.js';
+
+const shortDate = (iso) => { const l = shortLabel(iso); return `${l.md} (${l.wd})`; };
 import { computeSettlement, DEFAULT_COURT_FEE, DEFAULT_SHUTTLE_PRICE, fmt, resultToText, UNIT } from '../settle.js';
 
-export default function Settle({ members, records, setRecords, query }) {
+export default function Settle({ members, records, putRecord, deleteRecord, query }) {
   const date = query.date || lastSunday();
   const record = records[date];
 
@@ -33,12 +35,14 @@ export default function Settle({ members, records, setRecords, query }) {
     setTimeout(() => setToast(''), 1800);
   };
 
-  const toggle = (id, type) => {
+  // 탭할 때마다: 없음 → 2시간 → 1시간↓ → 없음
+  const cycle = (id) => {
     if (locked) return;
     setAtt((a) => {
       const next = { ...a };
-      if (next[id] === type) delete next[id];
-      else next[id] = type;
+      if (!next[id]) next[id] = 'full';
+      else if (next[id] === 'full') next[id] = 'partial';
+      else delete next[id];
       return next;
     });
   };
@@ -70,7 +74,7 @@ export default function Settle({ members, records, setRecords, query }) {
       attendees,
     };
     const rec = { date, ...input, result: computeSettlement(input), updatedAt: Date.now() };
-    setRecords((rs) => ({ ...rs, [date]: rec }));
+    putRecord(rec);
     setLocked(true);
     showToast(record ? '정산을 다시 했어요 ✨' : '정산 완료! 모임 기록에 저장했어요 ✨');
     setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
@@ -78,11 +82,7 @@ export default function Settle({ members, records, setRecords, query }) {
 
   const removeRecord = () => {
     if (!confirm(`${dateLabel(date)} 모임 기록을 삭제할까요?`)) return;
-    setRecords((rs) => {
-      const next = { ...rs };
-      delete next[date];
-      return next;
-    });
+    deleteRecord(date);
     goBack('/records');
   };
 
@@ -97,36 +97,26 @@ export default function Settle({ members, records, setRecords, query }) {
   };
 
   return (
-    <div className="page">
-      <Header title="코트비 엔빵" emoji="💰" back={query.date ? '/records' : '/'} />
+    <div className="page settle">
+      <Header
+        title="코트비 엔빵"
+        emoji="💰"
+        back={query.date ? '/records' : '/'}
+        right={record && <span className={`s-badge ${locked ? '' : 'edit'}`}>{locked ? '✅ 정산완료' : '✏️ 수정 중'}</span>}
+      />
 
-      <main className="content with-bottom-lg">
-        {/* 날짜 */}
-        <section className="card">
-          <label className="row-field">
-            <span className="rf-label">📅 날짜</span>
-            <span className="date-wrap">
-              <span className="date-text">{dateLabel(date)}</span>
-              <input type="date" value={date} onChange={(e) => changeDate(e.target.value)} aria-label="날짜 선택" />
-            </span>
+      <main className="content s-content">
+        {/* 날짜 + 비용 (한 줄) */}
+        <section className="card s-top">
+          <span className="date-wrap">
+            <span className="date-text">📅 {shortDate(date)}</span>
+            <input type="date" value={date} onChange={(e) => changeDate(e.target.value)} aria-label="날짜 선택" />
+          </span>
+          <label className="s-money">
+            <span>코트</span>
+            <input inputMode="decimal" value={courtFee} disabled={locked} onChange={(e) => setCourtFee(e.target.value.replace(/[^0-9.]/g, ''))} />
           </label>
-          {record && <div className="saved-badge">{locked ? '✅ 정산 완료된 날짜예요' : '✏️ 수정 중 — 다시 정산하면 기록이 바뀌어요'}</div>}
-        </section>
-
-        {/* 비용 */}
-        <section className="card">
-          <label className="row-field">
-            <span className="rf-label">🏟️ 코트비</span>
-            <span className="money-input">
-              <input inputMode="decimal" value={courtFee} disabled={locked} onChange={(e) => setCourtFee(e.target.value.replace(/[^0-9.]/g, ''))} />
-              <span>위안</span>
-            </span>
-          </label>
-          <p className="hint">1시간 69위안 × 2시간 × 코트 2개 = 276위안</p>
-
-          <div className="divider" />
-
-          <div className="row-field">
+          <span className={`s-money ${shuttleBought ? '' : 'off'}`}>
             <button
               type="button"
               className={`check ${shuttleBought ? 'on' : ''}`}
@@ -134,88 +124,72 @@ export default function Settle({ members, records, setRecords, query }) {
               onClick={() => setShuttleBought((v) => !v)}
               aria-pressed={shuttleBought}
             >
-              <span className="box">{shuttleBought ? '✓' : ''}</span>
-              배드민턴콕 구매
+              <span className="box">{shuttleBought ? '✓' : ''}</span>콕
             </button>
-            <span className={`money-input ${shuttleBought ? '' : 'off'}`}>
-              <input inputMode="decimal" value={shuttlePrice} disabled={locked || !shuttleBought} onChange={(e) => setShuttlePrice(e.target.value.replace(/[^0-9.]/g, ''))} />
-              <span>위안</span>
-            </span>
-          </div>
+            <input inputMode="decimal" value={shuttlePrice} disabled={locked || !shuttleBought} onChange={(e) => setShuttlePrice(e.target.value.replace(/[^0-9.]/g, ''))} />
+          </span>
         </section>
+        <p className="s-unit">단위: 위안 · 코트 69위안 × 2시간 × 2면 = 276</p>
 
         {/* 참석 체크 */}
-        <section className="card">
-          <div className="card-head">
-            <h2>🙋 참석 체크</h2>
-            {!locked && chosen.length > 0 && (
-              <button className="link-btn" onClick={() => setAtt({})}>모두 해제</button>
-            )}
+        <section className="card s-att">
+          <div className="s-att-head">
+            <span className="legend">
+              <span><i className="dot full" />2시간 = 1명</span>
+              <span><i className="dot partial" />1시간↓ = 0.5명</span>
+            </span>
+            {!locked && chosen.length > 0 && <button className="link-btn" onClick={() => setAtt({})}>모두 해제</button>}
           </div>
-          <div className="legend">
-            <span><i className="dot full" />2시간 = 1명</span>
-            <span><i className="dot partial" />1시간↓ = 0.5명</span>
-          </div>
-          <ul className="att-list">
+          {!locked && <p className="s-tip">이름 탭 → 2시간 → 1시간↓ → 해제</p>}
+          <div className={`chip-grid ${locked ? 'mini' : ''}`}>
             {rows.map((m) => {
               const t = att[m.id];
               if (locked && !t) return null;
-              const parent = m.parentId ? byId[m.parentId] : null;
               return (
-                <li key={m.id} className={`att-row ${t ? 'picked' : ''} ${m.parentId ? 'kid' : ''}`}>
-                  <span className="att-name">
-                    {m.name}
-                    {(parent || m.payerName) && m.parentId && <span className="m-sub">↳ {parent?.name ?? m.payerName} 정산</span>}
-                    {m.ghost && <span className="m-sub">삭제된 멤버</span>}
-                  </span>
-                  <span className="seg">
-                    <button className={`seg-btn full ${t === 'full' ? 'on' : ''}`} disabled={locked} onClick={() => toggle(m.id, 'full')}>2시간</button>
-                    <button className={`seg-btn partial ${t === 'partial' ? 'on' : ''}`} disabled={locked} onClick={() => toggle(m.id, 'partial')}>1시간↓</button>
-                  </span>
-                </li>
+                <button
+                  key={m.id}
+                  className={`p-chip ${t || ''} ${m.parentId ? 'kid' : ''} ${m.ghost ? 'ghost' : ''}`}
+                  disabled={locked}
+                  onClick={() => cycle(m.id)}
+                >
+                  <span className="p-name">{m.name}</span>
+                  {t && <span className="p-tag">{t === 'full' ? '2h' : '½'}</span>}
+                </button>
               );
             })}
-          </ul>
+          </div>
         </section>
 
         {/* 결과 */}
         {record && (
           <section ref={resultRef} className={`card result ${locked ? '' : 'stale'}`}>
-            <div className="card-head">
-              <h2>🧾 엔빵 결과</h2>
-              {locked && <button className="chip-btn" onClick={copy}>결과 복사</button>}
+            <div className="s-res-head">
+              <span>총 <b>{fmt(record.result.total)}</b>{record.shuttleBought ? '(콕 포함)' : ''} ÷ <b>{fmt(record.result.units)}</b>명</span>
+              <span className="per">1인 <b>{fmt(record.result.perUnit)}</b> 위안</span>
             </div>
-            <div className="sum-grid">
-              <div><span>총액</span><b>{fmt(record.result.total)}</b><small>위안</small></div>
-              <div><span>환산 인원</span><b>{fmt(record.result.units)}</b><small>명</small></div>
-              <div className="accent"><span>1인당</span><b>{fmt(record.result.perUnit)}</b><small>위안</small></div>
-            </div>
-            <p className="hint center">
-              코트비 {fmt(record.courtFee)}위안{record.shuttleBought ? ` + 콕 ${fmt(record.shuttlePrice)}위안` : ''} ÷ {fmt(record.result.units)}명
-            </p>
-            <ul className="pay-list">
+            <ul className="pay-grid">
               {record.result.lines.map((l) => (
                 <li key={l.payerId}>
-                  <span className="pay-name">
-                    {l.label}
-                    {l.note && <span className="m-sub">{l.note}</span>}
-                  </span>
-                  <span className="pay-amt"><b>{fmt(l.amount)}</b> 위안</span>
+                  <span className="pay-name">{l.label}{l.note && <small>{l.note}</small>}</span>
+                  <b className="pay-amt">{fmt(l.amount)}</b>
                 </li>
               ))}
             </ul>
             {locked && (
-              <button className="link-btn danger center-block" onClick={removeRecord}>이 날 기록 삭제</button>
+              <div className="s-res-actions">
+                <button className="link-btn danger" onClick={removeRecord}>기록 삭제</button>
+                <button className="chip-btn" onClick={copy}>📋 결과 복사</button>
+              </div>
             )}
           </section>
         )}
       </main>
 
       <div className="bottom-bar">
-        <div className="live-sum">
-          참석 <b>{chosen.length}</b>명 · 환산 <b>{fmt(units)}</b>명 · 총 <b>{fmt(total)}</b>위안
-          {units > 0 && <> · 1인 <b className="accent-text">{fmt(total / units)}</b>위안</>}
-        </div>
+        {!locked && <div className="live-sum">
+          참석 <b>{chosen.length}</b>명 · 환산 <b>{fmt(units)}</b>명 · 총 <b>{fmt(total)}</b>
+          {units > 0 && <> · 1인 <b className="accent-text">{fmt(total / units)}</b></>}
+        </div>}
         <div className="btn-row">
           <button className="btn secondary" disabled={!locked} onClick={() => setLocked(false)}>✏️ 수정</button>
           <button className="btn primary grow" disabled={locked} onClick={settle}>🏸 엔빵 정산</button>

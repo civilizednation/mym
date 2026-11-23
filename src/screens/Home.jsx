@@ -8,7 +8,7 @@ const MENU = [
   { to: '/members', emoji: '👥', title: '멤버', sub: '추가 · 편집 · 삭제', tone: 'peach' },
 ];
 
-export default function Home({ records }) {
+export default function Home({ records, mode, error }) {
   const latest = Object.values(records).sort((a, b) => b.date.localeCompare(a.date))[0];
   return (
     <div className="home">
@@ -36,6 +36,10 @@ export default function Home({ records }) {
           최근 모임 · {dateLabel(latest.date)} · 1인 <b>{fmt(latest.result.perUnit)}위안</b>
         </button>
       )}
+
+      <p className={`sync ${error ? 'err' : ''}`}>
+        {error ? '⚠️ 서버 연결 오류 — 인터넷을 확인해 주세요' : mode === 'cloud' ? '☁️ 모든 회원이 같은 기록을 함께 봐요' : '📱 이 기기에만 저장 중 (Firebase 미연결)'}
+      </p>
     </div>
   );
 }
