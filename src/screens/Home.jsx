@@ -1,7 +1,6 @@
 import { navigate } from '../router.js';
 import { dateLabel } from '../date.js';
 import { fmt } from '../settle.js';
-import { InstallButton } from './InstallSheet.jsx';
 
 const MENU = [
   { to: '/settle', emoji: '💰', title: '코트비 엔빵', sub: '참석 체크하고 바로 정산', tone: 'mint' },
@@ -37,8 +36,6 @@ export default function Home({ records, mode, error }) {
           최근 모임 · {dateLabel(latest.date)} · 1인 <b>{fmt(latest.result.perUnit)}위안</b>
         </button>
       )}
-
-      <InstallButton />
 
       <p className={`sync ${error ? 'err' : ''}`}>
         {error ? '⚠️ 서버 연결 오류 — 인터넷을 확인해 주세요' : mode === 'cloud' ? '☁️ 모든 회원이 같은 기록을 함께 봐요' : '📱 이 기기에만 저장 중 (Firebase 미연결)'}
