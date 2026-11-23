@@ -1,0 +1,10 @@
+{
+  "name": "무석연합민턴",
+  "short_name": "무석민턴",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4fbf9",
+  "theme_color": "#2bb5a0",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
